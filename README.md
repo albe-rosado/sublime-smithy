@@ -1,5 +1,5 @@
 # Smithy
-Unofficial Sublime Text package to provide syntax and eventually LSP support for [Smithy IDL] (https://awslabs.github.io/smithy/2.0/).
+Unofficial Sublime Text package to provide syntax and eventually LSP support for [Smithy IDL](https://awslabs.github.io/smithy/2.0/).
 
 ## Installation
 1. Install `Smithy` via Package Control
