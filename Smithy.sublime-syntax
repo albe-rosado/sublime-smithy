@@ -1,0 +1,287 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/syntax.html
+name: Smithy
+file_extensions:
+  - smithy
+scope: source.smithy
+contexts:
+  main:
+    - include: comment
+    - match: '^(\$)([A-Z-a-z_][A-Z-a-z0-9_]*)(:)\s*'
+      captures:
+        1: keyword.statement.control.smithy
+        2: support.type.property-name.smithy
+        3: punctuation.separator.dictionary.pair.smithy
+      push:
+        - meta_scope: meta.keyword.statement.control.smithy
+        - match: \n
+          pop: true
+        - include: value
+        - match: '[^\n]'
+          scope: invalid.illegal.control.smithy
+    - match: ^(metadata)\s+(.+)\s*(=)\s*
+      captures:
+        1: keyword.statement.smithy
+        2: variable.other.smithy
+        3: keyword.operator.smithy
+      push:
+        - meta_scope: meta.keyword.statement.metadata.smithy
+        - match: \n
+          pop: true
+        - include: value
+    - match: ^(namespace)\s+
+      captures:
+        1: keyword.statement.smithy
+      push:
+        - meta_scope: meta.keyword.statement.namespace.smithy
+        - match: \n
+          pop: true
+        - match: '[A-Z-a-z_][A-Z-a-z0-9_]*(\.[A-Z-a-z_][A-Z-a-z0-9_]*)*'
+          scope: entity.name.type.smithy
+        - match: '[^\n]'
+          scope: invalid.illegal.namespace.smithy
+    - match: ^(use)\s+
+      captures:
+        1: keyword.statement.smithy
+      push:
+        - meta_scope: meta.keyword.statement.use.smithy
+        - match: \n
+          pop: true
+        - match: '[A-Z-a-z_][A-Z-a-z0-9_]*(\.[A-Z-a-z_][A-Z-a-z0-9_]*)*#[A-Z-a-z_][A-Z-a-z0-9_]*(\.[A-Z-a-z_][A-Z-a-z0-9_]*)*'
+          scope: entity.name.type.smithy
+        - match: '[^\n]'
+          scope: invalid.illegal.use.smithy
+    - include: trait
+    - match: '^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|union|service|operation|resource|enum|intEnum)\s+([A-Z-a-z_][A-Z-a-z0-9_]*)\s+(with)\s+(\[)'
+      captures:
+        1: keyword.statement.smithy
+        2: entity.name.type.smithy
+        3: keyword.statement.with.smithy
+        4: punctuation.definition.array.begin.smithy
+      push:
+        - meta_scope: meta.keyword.statement.shape.smithy
+        - match: '\]'
+          captures:
+            0: punctuation.definition.array.end.smithy
+          pop: true
+        - include: identifier
+        - include: comment
+        - match: ','
+          scope: punctuation.separator.array.smithy
+    - match: '^(byte|short|integer|long|float|double|bigInteger|bigDecimal|boolean|blob|string|timestamp|document|list|set|map|union|service|operation|resource|enum|intEnum)\s+([A-Z-a-z_][A-Z-a-z0-9_]*)'
+      scope: meta.keyword.statement.shape.smithy
+      captures:
+        1: keyword.statement.smithy
+        2: entity.name.type.smithy
+    - match: '^(structure)\s+([A-Z-a-z_][A-Z-a-z0-9_]*)(?:\s+(for)\s+([0-9a-zA-Z\.#-]+))?\s+(with)\s+(\[)'
+      captures:
+        1: keyword.statement.smithy
+        2: entity.name.type.smithy
+        3: keyword.statement.for-resource.smithy
+        4: entity.name.type.smithy
+        5: keyword.statement.with.smithy
+        6: punctuation.definition.array.begin.smithy
+      push:
+        - meta_scope: meta.keyword.statement.shape.smithy
+        - match: '\]'
+          captures:
+            0: punctuation.definition.array.end.smithy
+          pop: true
+        - include: identifier
+        - include: comment
+        - match: ','
+          scope: punctuation.separator.array.smithy
+    - match: '^(structure)\s+([A-Z-a-z_][A-Z-a-z0-9_]*)(?:\s+(for)\s+([0-9a-zA-Z\.#-]+))?'
+      scope: meta.keyword.statement.shape.smithy
+      captures:
+        1: keyword.statement.smithy
+        2: entity.name.type.smithy
+        3: keyword.statement.for-resource.smithy
+        4: entity.name.type.smithy
+    - match: '\{'
+      captures:
+        0: punctuation.definition.dictionary.begin.smithy
+      push:
+        - match: '\}'
+          captures:
+            0: punctuation.definition.dictionary.end.smithy
+          pop: true
+        - include: shape_inner
+    - match: '^(apply)\s+([A-Z-a-z0-9_]+)\s+'
+      captures:
+        1: keyword.statement.smithy
+        2: entity.name.type.smithy
+      push:
+        - meta_scope: meta.keyword.statement.apply.smithy
+        - match: \n
+          pop: true
+        - include: trait
+        - match: '[^\n]'
+          scope: invalid.illegal.apply.smithy
+  comment:
+    - include: doc_comment
+    - include: line_comment
+  array:
+    - match: '\['
+      captures:
+        0: punctuation.definition.array.begin.smithy
+      push:
+        - meta_scope: meta.structure.array.smithy
+        - match: '\]'
+          captures:
+            0: punctuation.definition.array.end.smithy
+          pop: true
+        - include: value
+        - match: ','
+          scope: punctuation.separator.array.smithy
+        - match: '[^\s\]]'
+          scope: invalid.illegal.array.smithy
+  doc_comment:
+    - match: (///.*)
+      scope: comment.block.documentation.smithy
+  dquote:
+    - match: '"'
+      captures:
+        0: punctuation.definition.string.begin.smithy
+      push:
+        - meta_scope: string.quoted.double.smithy
+        - match: '"'
+          captures:
+            0: punctuation.definition.string.end.smithy
+          pop: true
+        - match: \\.
+          scope: constant.character.escape.smithy
+  dquote_key:
+    - match: '".*"(?=\s*:)'
+      scope: support.type.property-name.smithy
+  elided_target:
+    - match: '(\$)([A-Z-a-z0-9_\.#$]+)'
+      captures:
+        1: keyword.statement.elision.smithy
+        2: support.type.property-name.smithy
+  identifier:
+    - match: '[A-Z-a-z_][A-Z-a-z0-9_]*'
+      scope: entity.name.type.smithy
+  identifier_key:
+    - match: '[A-Z-a-z0-9_\.#$]+(?=\s*:)'
+      scope: support.type.property-name.smithy
+  keywords:
+    - match: \b(?:true|false|null)\b
+      scope: constant.language.smithy
+  line_comment:
+    - match: (//.*)
+      scope: comment.line.double-slash.smithy
+  number:
+    - match: |-
+        (?x:            # turn on extended mode
+          -?         # an optional minus
+          (?:
+            0        # a zero
+            |        # ...or...
+            [1-9]    # a 1-9 character
+            \d*      # followed by zero or more digits
+          )
+          (?:
+            (?:
+              \.     # a period
+              \d+    # followed by one or more digits
+            )?
+            (?:
+              [eE]   # an e character
+              [+-]?  # followed by an option +/-
+              \d+    # followed by one or more digits
+            )?       # make exponent optional
+          )?         # make decimal portion optional
+        )
+      scope: constant.numeric.smithy
+  object:
+    - match: '\{'
+      captures:
+        0: punctuation.definition.dictionary.begin.smithy
+      push:
+        - meta_scope: meta.structure.dictionary.smithy
+        - match: '\}'
+          captures:
+            0: punctuation.definition.dictionary.end.smithy
+          pop: true
+        - include: object_inner
+  object_inner:
+    - include: comment
+    - include: string_key
+    - match: ':'
+      scope: punctuation.separator.dictionary.key-value.smithy
+    - match: '='
+      scope: keyword.operator.smithy
+    - include: value
+    - match: ','
+      scope: punctuation.separator.dictionary.pair.smithy
+  shape_inner:
+    - include: trait
+    - match: ':='
+      scope: punctuation.separator.dictionary.inline-struct.smithy
+    - include: with_statement
+    - include: elided_target
+    - include: object_inner
+  shapeid:
+    - match: '[A-Z-a-z_][A-Z-a-z0-9_\.#$]*'
+      scope: entity.name.type.smithy
+  string:
+    - include: textblock
+    - include: dquote
+    - include: shapeid
+  string_key:
+    - include: identifier_key
+    - include: dquote_key
+  textblock:
+    - match: '"""'
+      captures:
+        0: punctuation.definition.string.begin.smithy
+      push:
+        - meta_scope: string.quoted.double.smithy
+        - match: '"""'
+          captures:
+            0: punctuation.definition.string.end.smithy
+          pop: true
+        - match: \\.
+          scope: constant.character.escape.smithy
+  trait:
+    - match: '(@)([0-9a-zA-Z\.#-]+)(\()'
+      captures:
+        1: punctuation.definition.annotation.smithy
+        2: storage.type.annotation.smithy
+        3: punctuation.definition.dictionary.begin.smithy
+      push:
+        - meta_scope: meta.keyword.statement.trait.smithy
+        - match: \)
+          captures:
+            0: punctuation.definition.dictionary.end.smithy
+          pop: true
+        - include: object_inner
+        - include: value
+    - match: '(@)([0-9a-zA-Z\.#-]+)'
+      scope: meta.keyword.statement.trait.smithy
+      captures:
+        1: punctuation.definition.annotation.smithy
+        2: storage.type.annotation.smithy
+  value:
+    - include: comment
+    - include: keywords
+    - include: number
+    - include: string
+    - include: array
+    - include: object
+  with_statement:
+    - match: '(with)\s+(\[)'
+      captures:
+        1: keyword.statement.with.smithy
+        2: punctuation.definition.array.begin.smithy
+      push:
+        - match: '\]'
+          captures:
+            0: punctuation.definition.array.end.smithy
+          pop: true
+        - match: ','
+          scope: punctuation.separator.array.smithy
+        - include: identifier
+        - include: comment
